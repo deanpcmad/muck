@@ -31,7 +31,7 @@ module Muck
       file = File.open(export_path, 'w')
       ssh_session = @database.server.create_ssh_session
       channel = ssh_session.open_channel do |channel|
-        logger.debug "Running: #{@database.dump_command}"
+        #logger.debug "Running: #{@database.dump_command}"
         channel.exec(@database.dump_command) do |channel, success|
           raise Error, "Could not execute dump command" unless success
           channel.on_data do |c, data|
