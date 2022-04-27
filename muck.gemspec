@@ -14,5 +14,5 @@ Gem::Specification.new do |s|
   s.files = Dir["**/*"]
   s.bindir = "bin"
   s.executables << 'muck'
-  s.add_dependency "net-ssh", '>= 3.2', '< 4.0'
+  s.add_dependency "net-ssh"#, '>= 3.2', '< 4.0'
 end
