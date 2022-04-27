@@ -2,7 +2,7 @@
 
 $:.push File.expand_path("../../lib", __FILE__)
 
-config_file_path = ENV['MUCK_CONFIG_PATH'] || File.expand_path('/opt/muck/config')
+config_file_path = File.expand_path('/config')
 
 $stdout.sync = true
 $stderr.sync = true

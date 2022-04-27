@@ -1,0 +1,9 @@
+version: "3"
+services:
+  muck:
+    # image: IMAGE
+    build: .
+    volumes:
+      - "./test/config:/config"
+      - "./test/data:/data"
+      - "./test/ssh:/ssh"
