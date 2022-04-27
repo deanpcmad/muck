@@ -1,5 +1,7 @@
 # Muck
 
+Modifed from [@adamcooke/muck](https://github.com/adamcooke/muck).
+
 Muck is a tool which will backup & store MySQL dump files from remote hosts. Through a simple configuration file, you can add hosts & databaes which you wish to be backed up and Muck will connect to those hosts over SSH, grab a dump file using `mysqldump`, gzip it and store it away on its own server.
 
 * Connect to any number of servers and backup any number of databases on each server.
@@ -8,39 +10,20 @@ Muck is a tool which will backup & store MySQL dump files from remote hosts. Thr
 * Secure because we connect over SSH before connecting to the database.
 * Runs as a service or in a cron.
 
-## Requirements
+## Docker
 
-* Ruby 2.3 or higher
-
-## Installation
-
-```
-sudo gem install muck
-```
-
-We recommend taht you create a user which will run your Muck services.
-
-```
-sudo useradd -r -m -d /opt/muck muck
-```
-
-You'll need to make directories for configuration and storage.
-
-```
-sudo -u muck mkdir /opt/muck/config
-sudo -u muck mkdir /opt/muck/storage
-```
-
-Finally, you'll need to generate an SSH key pair which will be used for authenticating your requests to the servers you wish to backup. Password authentication is not supported in Muck.
-
-```
-sudo -u muck ssh-keygen -f /opt/muck/ssh-key
-# Follow the instructions to generate a keypair. Do not add a passphrase.
+```yml
+version: "3"
+services:
+  muck:
+    image: ghcr.io/deanpcmad/muck:latest
+    volumes:
+      - "./config:/config"
+      - "./data:/data"
+      - "./ssh:/ssh"
 ```
 
 ## Configuration
-
-We recommend storing your muck configuration in `/opt/muck/config`. You should add a single file for each server you wish to backup. This is a full example file which includes all configuration options which are available. Sensible defaults are set too so most options can be skipped. The values in the example below are the current defaults.
 
 ```ruby
 server do
@@ -57,14 +40,14 @@ server do
     # The SSH port
     port 22
     # The path to the SSH key that you will authenticate with
-    key "/opt/muck/ssh-key"
+    key "/ssh"
   end
 
   storage do
     # Specifies the directory that backups will be stored for this server. You
     # can use :hostname to insert the name of the hostname automatically and
     # :database to insert the database name.
-    path "/opt/muck/data/:hostname/:database"
+    path "/data/:hostname/:database"
     # The number of "master" bacups which should be kept before being archived.
     keep 50
   end
