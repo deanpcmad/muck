@@ -1,7 +1,5 @@
 source "https://rubygems.org"
 
-gem "net-ssh", "~> 6.1"
-
-gem "ed25519", "~> 1.3"
-
-gem "bcrypt_pbkdf", "~> 1.1"
+gem "net-ssh"
+gem "ed25519"
+gem "bcrypt_pbkdf"

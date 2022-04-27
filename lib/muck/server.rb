@@ -21,6 +21,10 @@ module Muck
       @server_hash[:frequency] || @config.defaults[:frequency] || 60
     end
 
+    def healthchecks
+      @server_hash[:healthchecks] || @config.defaults[:healthchecks] || nil
+    end
+
     def export_path
       if path = (@server_hash.dig(:storage, :path) || @config.defaults.dig(:storage, :path))
         path.gsub(":hostname", self.hostname)

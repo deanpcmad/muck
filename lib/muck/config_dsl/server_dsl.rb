@@ -19,6 +19,10 @@ module Muck
         @hash[:frequency] = frequency
       end
 
+      def healthchecks(healthchecks)
+        @hash[:healthchecks] = healthchecks
+      end
+
       def ssh(&block)
         dsl = SSHDSL.new(@hash[:ssh] = Hash.new)
         dsl.instance_eval(&block)

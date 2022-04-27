@@ -34,6 +34,9 @@ server do
   # How often you wish to take a backup (in minutes)
   frequency 60
 
+  # Sends a request to this Healthchecks URL every minute
+  healthchecks "http://health.deanpcmad.com/ping/abc123"
+
   ssh do
     # The user that should connect to the server with SSH
     username 'root'
