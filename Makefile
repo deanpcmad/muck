@@ -5,7 +5,7 @@
 # Configuration
 # ==============================================================================
 
-DOCKER_IMAGE := ghcr.io/krystal/apia-docs-generator
+DOCKER_IMAGE := ghcr.io/deanpcmad/muck
 DOCKER_BUILD_CMD = docker build $(DOCKER_BUILD_ARGS) .
 
 # ==============================================================================
