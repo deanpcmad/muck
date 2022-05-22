@@ -22,6 +22,23 @@ module Muck
       @upload_path ||= File.join(@database.upload_path, @time + ".sql.gz")
     end
 
+    def upload_bucket
+      @upload_bucket ||= @database.server.upload[:bucket]
+    end
+
+    def s3_client
+      options = {}
+
+      options[:access_key_id] = @database.server.upload[:aws_client_id]
+      options[:secret_access_key] = @database.server.upload[:aws_client_secret]
+      options[:region] = @database.server.upload[:aws_region]
+      if @database.server.upload[:aws_endpoint]
+        options[:endpoint] = @database.server.upload[:aws_endpoint]
+      end
+
+      Aws::S3::Client.new(options)
+    end
+
     def run
       logger.info "Backing up #{blue @database.name} from #{blue @database.server.hostname}"
       take_backup
@@ -29,6 +46,7 @@ module Muck
       upload
       store_in_manifest
       tidy_masters
+      tidy_uploads
     end
 
     def take_backup
@@ -37,7 +55,7 @@ module Muck
       file = File.open(export_path, 'w')
       ssh_session = @database.server.create_ssh_session
       channel = ssh_session.open_channel do |channel|
-        logger.debug "Running: #{@database.dump_command}"
+        logger.debug "Running: #{@database.dump_command.gsub(@database.password, '****')}"
         channel.exec(@database.dump_command) do |channel, success|
           raise Error, "Could not execute dump command" unless success
           channel.on_data do |c, data|
@@ -90,22 +108,15 @@ module Muck
     def upload
       if @database.server.upload[:enabled]
 
-        s3 = Aws::S3::Client.new(
-          access_key_id: @database.server.upload[:aws_client_id],
-          secret_access_key: @database.server.upload[:aws_client_secret],
-          region: @database.server.upload[:aws_region],
-          endpoint: @database.server.upload[:aws_endpoint]
-        )
-
         if File.exist?(export_path)
-          response = s3.put_object(
-            bucket: @database.server.upload[:bucket],
+          response = s3_client.put_object(
+            bucket: upload_bucket,
             key: upload_path,
             body: File.open(export_path)
           )
           
           if response.etag
-            uploaded = [@database.server.upload[:bucket], upload_path].join("/")
+            uploaded = [upload_bucket, upload_path].join("/")
             logger.info "Uploaded #{blue uploaded}"
           else
             raise Error, "Couldn't upload backup because it doesn't exist at #{export_path}"
@@ -132,6 +143,36 @@ module Muck
       end
     ensure
       @database.save_manifest
+    end
+
+    def tidy_uploads
+      if @database.server.upload[:enabled]
+
+        objects = s3_client.list_objects({
+          bucket: upload_bucket,
+          prefix: @database.upload_path
+        })
+
+        files = objects.contents.collect(&:key).sort.reverse.drop(@database.server.upload[:keep])
+
+        unless files.empty?
+          logger.info "Tidying uploaded backup files. Keeping #{@database.server.upload[:keep]} back."
+          files.each do |file|
+            resp = s3_client.delete_object({
+              bucket: upload_bucket, 
+              key: file
+            })
+
+            if resp
+              @database.manifest[:backups].delete_if { |b| b[:path] == file }
+              logger.info "-> Deleted #{green file}"
+            else
+              logger.error red("-> Couldn't delete file at #{file}")
+            end
+          end
+        end
+        
+      end
     end
 
   end
