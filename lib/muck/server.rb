@@ -25,11 +25,19 @@ module Muck
       @server_hash[:healthchecks] || @config.defaults[:healthchecks] || nil
     end
 
+    def upload
+      @server_hash[:upload] || @config.defaults[:upload] || nil
+    end
+
     def export_path
       if path = (@server_hash.dig(:storage, :path) || @config.defaults.dig(:storage, :path))
         path.gsub(":hostname", self.hostname)
-      else
-        "/opt/muck/data/#{self.hostname}/:database"
+      end
+    end
+
+    def upload_path
+      if path = (@server_hash.dig(:upload, :path) || @config.defaults.dig(:upload, :path))
+        path.gsub(":hostname", self.hostname)
       end
     end
 

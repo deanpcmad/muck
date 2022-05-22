@@ -1,6 +1,7 @@
 require 'muck/logging'
 require 'muck/utils'
 require 'fileutils'
+require "aws-sdk-s3"
 
 module Muck
   class Backup
@@ -10,17 +11,22 @@ module Muck
 
     def initialize(database)
       @database = database
-      @time = Time.now
+      @time = Time.now.strftime("%Y-%m-%d-%H-%M-%S")
     end
 
     def export_path
-      @export_path ||= File.join(@database.export_path, "master", @time.strftime("%Y-%m-%d-%H-%M-%S.sql"))
+      @export_path ||= File.join(@database.export_path, "master", @time + ".sql")
+    end
+
+    def upload_path
+      @upload_path ||= File.join(@database.upload_path, @time + ".sql.gz")
     end
 
     def run
       logger.info "Backing up #{blue @database.name} from #{blue @database.server.hostname}"
       take_backup
       compress
+      upload
       store_in_manifest
       tidy_masters
     end
@@ -77,6 +83,37 @@ module Muck
         end
       else
         raise Error, "Couldn't compress backup because it doesn't exist at #{export_path}"
+      end
+    end
+
+    # Upload the compressed backup file to AWS S3/Backblaze B2
+    def upload
+      if @database.server.upload[:enabled]
+
+        s3 = Aws::S3::Client.new(
+          access_key_id: @database.server.upload[:aws_client_id],
+          secret_access_key: @database.server.upload[:aws_client_secret],
+          region: @database.server.upload[:aws_region],
+          endpoint: @database.server.upload[:aws_endpoint]
+        )
+
+        if File.exist?(export_path)
+          response = s3.put_object(
+            bucket: @database.server.upload[:bucket],
+            key: upload_path,
+            body: File.open(export_path)
+          )
+          
+          if response.etag
+            uploaded = [@database.server.upload[:bucket], upload_path].join("/")
+            logger.info "Uploaded #{blue uploaded}"
+          else
+            raise Error, "Couldn't upload backup because it doesn't exist at #{export_path}"
+          end
+        end
+
+      else
+        logger.warn "Upload is not enabled so skipping"
       end
     end
 

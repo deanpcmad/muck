@@ -33,6 +33,10 @@ module Muck
       @export_path ||= server.export_path.gsub(':database', self.name)
     end
 
+    def upload_path
+      @upload_path ||= server.upload_path.gsub(':database', self.name)
+    end
+
     def backup
       Muck::Backup.new(self).run
     end

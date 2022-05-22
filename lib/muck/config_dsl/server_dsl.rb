@@ -1,6 +1,6 @@
 require 'muck/config_dsl/ssh_dsl'
 require 'muck/config_dsl/storage_dsl'
-require 'muck/config_dsl/retention_dsl'
+require 'muck/config_dsl/upload_dsl'
 require 'muck/config_dsl/database_dsl'
 
 module Muck
@@ -33,8 +33,8 @@ module Muck
         dsl.instance_eval(&block)
       end
 
-      def retention(&block)
-        dsl = RetentionDSL.new(@hash[:retention] = Hash.new)
+      def upload(&block)
+        dsl = UploadDSL.new(@hash[:upload] = Hash.new)
         dsl.instance_eval(&block)
       end
 
