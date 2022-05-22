@@ -19,7 +19,6 @@ module Muck
         server.databases.each do |database|
           if database.backup_now? || options[:force]
             database.backup
-            database.archive_all
           end
         end
       end

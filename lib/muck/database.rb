@@ -1,4 +1,3 @@
-require 'muck/archive'
 require 'muck/backup'
 require 'yaml'
 
@@ -32,12 +31,6 @@ module Muck
 
     def export_path
       @export_path ||= server.export_path.gsub(':database', self.name)
-    end
-
-    def archive_all
-      @server.retention.each do |name, maximum|
-        Muck::Archive.new(self, name, maximum).run
-      end
     end
 
     def backup
