@@ -83,7 +83,7 @@ module Muck
 
     def store_in_manifest
       if File.exist?(export_path)
-        details = {:timestamp => @time.to_i, :path => export_path, :size => File.size(export_path)}
+        details = {timestamp: Time.now.to_i, path: export_path, size: File.size(export_path)}
         @database.manifest[:backups] << details
         @database.save_manifest
       else
