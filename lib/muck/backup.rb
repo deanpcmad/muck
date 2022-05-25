@@ -18,8 +18,16 @@ module Muck
       @export_path ||= File.join(@database.export_path, "master", @time + ".sql")
     end
 
+    def encrypted_path
+      @encrypted_path ||= File.join(@database.export_path, "master", @time + ".sql.enc")
+    end
+
     def upload_path
       @upload_path ||= File.join(@database.upload_path, @time + ".sql.gz")
+    end
+
+    def encrypted_upload_path
+      @encrypted_upload_path ||= File.join(@database.upload_path, @time + ".sql.enc")
     end
 
     def upload_bucket
@@ -42,6 +50,7 @@ module Muck
     def run
       logger.info "Backing up #{blue @database.name} from #{blue @database.server.hostname}"
       take_backup
+      encrypt
       compress
       upload
       store_in_manifest
@@ -82,16 +91,44 @@ module Muck
     end
 
     def store_in_manifest
-      if File.exist?(export_path)
-        details = {:timestamp => @time.to_i, :path => export_path, :size => File.size(export_path)}
+      if @database.server.encrypt[:enabled]
+        file = encrypted_path
+      else
+        file = export_path
+      end
+
+      if File.exist?(file)
+        details = {timestamp: Time.now.to_i, path: file, size: File.size(file)}
         @database.manifest[:backups] << details
         @database.save_manifest
       else
-        raise Error, "Couldn't store backup in manifest because it doesn't exist at #{export_path}"
+        raise Error, "Couldn't store backup in manifest because it doesn't exist at #{file}"
+      end
+    end
+
+    def encrypt
+      if @database.server.encrypt[:enabled]
+        if File.exist?(export_path)
+          command = @database.encrypt_command(export_path)
+          if system(command)
+            @encrypted_path = @export_path + ".enc"
+            File.delete(export_path)
+            logger.info "Encrypted #{blue @encrypted_path} with GPG"
+          else
+            logger.warn "Couldn't encrypt #{export_path} with GPG"
+          end
+        else
+          raise Error, "Couldn't compress backup because it doesn't exist at #{export_path}"
+        end
+      else
+        logger.warn "Encryption is not enabled so skipping"
       end
     end
 
     def compress
+      # Encryption also compresses so skip
+      return if @database.server.encrypt[:enabled]
+
       if File.exist?(export_path)
         if system("gzip #{export_path}")
           @export_path = @export_path + ".gz"
@@ -108,18 +145,26 @@ module Muck
     def upload
       if @database.server.upload[:enabled]
 
-        if File.exist?(export_path)
+        if @database.server.encrypt[:enabled]
+          file = encrypted_path
+          upload_file = encrypted_upload_path
+        else
+          file = export_path
+          upload_file = upload_path
+        end
+
+        if File.exist?(file)
           response = s3_client.put_object(
             bucket: upload_bucket,
-            key: upload_path,
-            body: File.open(export_path)
+            key: upload_file,
+            body: File.open(file)
           )
           
           if response.etag
-            uploaded = [upload_bucket, upload_path].join("/")
+            uploaded = [upload_bucket, upload_file].join("/")
             logger.info "Uploaded #{blue uploaded}"
           else
-            raise Error, "Couldn't upload backup because it doesn't exist at #{export_path}"
+            raise Error, "Couldn't upload backup because it doesn't exist at #{file}"
           end
         end
 

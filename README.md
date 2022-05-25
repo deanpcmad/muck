@@ -2,9 +2,13 @@
 
 Modifed from [@adamcooke/muck](https://github.com/adamcooke/muck).
 
-Muck is a tool which will backup & store MySQL dump files from remote hosts. Through a simple configuration file, you can add hosts & databaes which you wish to be backed up and Muck will connect to those hosts over SSH, grab a dump file using `mysqldump`, gzip it and store it away on its own server.
+Muck is a tool which will backup & store MySQL dump files from remote hosts. Through a simple
+configuration file, you can add hosts & databaes which you wish to be backed up and Muck will
+connect to those hosts over SSH, grab a dump file using `mysqldump`, encrypt it,
+compress it and store it away on its own server and/or upload it to S3.
 
 * Connect to any number of servers and backup any number of databases on each server.
+* Encrypt backup files with GPG.
 * Tidies up after itself.
 * Secure because we connect over SSH before connecting to the database.
 * Runs as a service or in a cron.
@@ -53,6 +57,36 @@ server do
     
     # The number of backups to keep
     keep 50
+  end
+
+  encrypt do
+    # Should Encryption be enabled?
+    enabled false
+
+    # The password used for GPG Encryption
+    password "mypassword"
+  end
+
+  upload do
+    # Should uploads be enabled?
+    enabled true
+
+    # The S3 bucket backup files will be uploaded to
+    bucket "my-bucket"
+
+    # The directory in which backups will be sorted in the bucket
+    # Can set :hostname and :database
+    path ":hostname/:database"
+
+    # The number of backups to keep
+    keep 50
+
+    # The AWS region in which your bucket is stored
+    aws_region "eu-west-2"
+
+    # AWS API keys
+    aws_client_id "client-id"
+    aws_client_secret "client-secret"
   end
 
   database do

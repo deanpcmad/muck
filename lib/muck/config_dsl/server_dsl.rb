@@ -1,5 +1,6 @@
 require 'muck/config_dsl/ssh_dsl'
 require 'muck/config_dsl/storage_dsl'
+require 'muck/config_dsl/encrypt_dsl'
 require 'muck/config_dsl/upload_dsl'
 require 'muck/config_dsl/database_dsl'
 
@@ -30,6 +31,11 @@ module Muck
 
       def storage(&block)
         dsl = StorageDSL.new(@hash[:storage] = Hash.new)
+        dsl.instance_eval(&block)
+      end
+
+      def encrypt(&block)
+        dsl = EncryptDSL.new(@hash[:encrypt] = Hash.new)
         dsl.instance_eval(&block)
       end
 

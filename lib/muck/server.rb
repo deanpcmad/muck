@@ -29,6 +29,10 @@ module Muck
       @server_hash[:upload] || @config.defaults[:upload] || nil
     end
 
+    def encrypt
+      @server_hash[:encrypt] || @config.defaults[:encrypt] || nil
+    end
+
     def export_path
       if path = (@server_hash.dig(:storage, :path) || @config.defaults.dig(:storage, :path))
         path.gsub(":hostname", self.hostname)

@@ -58,6 +58,10 @@ module Muck
       "mysqldump -q --single-transaction -h #{hostname} -u #{username} #{password_opt} #{name}"
     end
 
+    def encrypt_command(file)
+      "echo #{server.encrypt[:password]} |  gpg --pinentry-mode loopback  --passphrase-fd 0 --output #{file}.enc --symmetric --cipher-algo AES256 #{file}"
+    end
+
     def last_backup_at
       if last_backup = manifest[:backups].last
         Time.at(last_backup[:timestamp])
