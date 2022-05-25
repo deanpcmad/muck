@@ -18,6 +18,12 @@ begin
   case ARGV[0]
   when 'run'
     config.run(:force => true)
+
+    if config.defaults[:healthchecks]
+      Muck.logger.info "\e[32mSending Healthchecks Ping\e[0m"
+
+      Net::HTTP.get(URI.parse(config.defaults[:healthchecks]))
+    end
   when 'single'
     if server = config.servers.find { |s| s.hostname.downcase == ARGV[1].to_s.downcase }
       if database = server.databases.find { |d| d.name.downcase == ARGV[2].to_s.downcase }
