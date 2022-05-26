@@ -4,7 +4,7 @@ namespace :muck do
   task :cron do
     require 'clockwork'
     config_file_path = ENV['MUCK_CONFIG_PATH'] || File.expand_path('/config')
-    require File.config_file_path + "cron"
+    require config_file_path + "cron"
     trap('TERM') { puts "Exiting..."; Process.exit(0) }
     Clockwork.run
   end
