@@ -33,6 +33,11 @@ module Muck
 
       root_dsl = ConfigDSL::RootDSL.new(self)
       files = Dir[File.join(@directory, "**", "*.rb")]
+
+      puts "*****"
+      puts files
+      puts "*****"
+
       files.each do |file|
         root_dsl.instance_eval(File.read(file), file)
       end
