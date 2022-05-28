@@ -33,12 +33,10 @@ module Muck
 
       root_dsl = ConfigDSL::RootDSL.new(self)
       files = Dir[File.join(@directory, "**", "*.rb")]
-
-      puts "*****"
-      puts files
-      puts "*****"
-
       files.each do |file|
+        # Skip the cron config file
+        next if file.match(/cron/)
+        
         root_dsl.instance_eval(File.read(file), file)
       end
     end
