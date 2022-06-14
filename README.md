@@ -32,7 +32,10 @@ services:
 server do
   # The hostname of the server you wish to backup. Used to connect with SSH and
   # the name of the directory used for storing the backups.
-  hostname "myserver.example.com"
+  name "myserver.example.com"
+
+  # The IP address of the server
+  ip_address "1.1.1.1"
 
   # How often you wish to take a backup (in minutes)
   frequency 60

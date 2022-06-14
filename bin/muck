@@ -25,15 +25,15 @@ begin
       Net::HTTP.get(URI.parse(config.defaults[:healthchecks]))
     end
   when 'single'
-    if server = config.servers.find { |s| s.hostname.downcase == ARGV[1].to_s.downcase }
+    if server = config.servers.find { |s| s.name.downcase == ARGV[1].to_s.downcase }
       if database = server.databases.find { |d| d.name.downcase == ARGV[2].to_s.downcase }
         database.backup
       else
-        puts "No database found matching name '#{ARGV[2]}' on #{server.hostname}"
+        puts "No database found matching name '#{ARGV[2]}' on #{server.name}"
         exit 1
       end
     else
-      puts "No server found matching hostname '#{ARGV[1]}'"
+      puts "No server found matching name '#{ARGV[1]}'"
       exit 1
     end
   when 'start'

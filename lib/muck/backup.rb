@@ -48,7 +48,7 @@ module Muck
     end
 
     def run
-      logger.info "Backing up #{blue @database.name} from #{blue @database.server.hostname}"
+      logger.info "Backing up #{blue @database.name} from #{blue @database.server.ip_address} (#{blue @database.server.name})"
       take_backup
       encrypt
       compress
@@ -59,7 +59,7 @@ module Muck
     end
 
     def take_backup
-      logger.info "Connecting to #{blue @database.server.ssh_username}@#{blue @database.server.hostname}:#{blue @database.server.ssh_port}"
+      logger.info "Connecting to #{blue @database.server.ssh_username}@#{blue @database.server.ip_address}:#{blue @database.server.ssh_port}"
       FileUtils.mkdir_p(File.dirname(self.export_path))
       file = File.open(export_path, 'w')
       ssh_session = @database.server.create_ssh_session

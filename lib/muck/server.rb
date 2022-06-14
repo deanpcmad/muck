@@ -6,15 +6,19 @@ module Muck
 
     DEFAULT_RENTENTION = {:hourly => 24, :daily => 7, :monthly => 12, :yearly => 8}
     DEFAULT_SSH_PROPERTIES = {:username => "root", :port => 22, :key => "/opt/muck/ssh-key"}
-    DEFAULT_DATABASE_PROPERTIES = {:hostname => '127.0.0.1', :username => 'root', :name => 'example', :password => nil}
+    DEFAULT_DATABASE_PROPERTIES = {:name => "localhost", :ip_address => '127.0.0.1', :username => 'root', :name => 'example', :password => nil}
 
     def initialize(config, server_hash = {})
       @config = config
       @server_hash = server_hash
     end
 
-    def hostname
-      @server_hash[:hostname]
+    def name
+      @server_hash[:name]
+    end
+
+    def ip_address
+      @server_hash[:ip_address]
     end
 
     def frequency
@@ -35,13 +39,13 @@ module Muck
 
     def export_path
       if path = (@server_hash.dig(:storage, :path) || @config.defaults.dig(:storage, :path))
-        path.gsub(":hostname", self.hostname)
+        path.gsub(":name", self.name)
       end
     end
 
     def upload_path
       if path = (@server_hash.dig(:upload, :path) || @config.defaults.dig(:upload, :path))
-        path.gsub(":hostname", self.hostname)
+        path.gsub(":name", self.name)
       end
     end
 
@@ -77,7 +81,7 @@ module Muck
     end
 
     def create_ssh_session
-      Net::SSH.start(self.hostname, self.ssh_username, :port => self.ssh_port, :keys => ssh_properties[:key] ? [ssh_properties[:key]] : nil)
+      Net::SSH.start(self.ip_address, self.ssh_username, :port => self.ssh_port, :keys => ssh_properties[:key] ? [ssh_properties[:key]] : nil)
     end
 
   end

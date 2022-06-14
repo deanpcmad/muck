@@ -12,8 +12,12 @@ module Muck
         @hash = hash
       end
 
-      def hostname(hostname)
-        @hash[:hostname] = hostname
+      def name(name)
+        @hash[:name] = name
+      end
+
+      def ip_address(ip_address)
+        @hash[:ip_address] = ip_address
       end
 
       def frequency(frequency)
