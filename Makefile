@@ -5,7 +5,7 @@
 # Configuration
 # ==============================================================================
 
-DOCKER_IMAGE := harbor.d34n.uk/tools/muck
+DOCKER_IMAGE := ghcr.io/deanocodes/muck
 DOCKER_BUILD_CMD = docker build $(DOCKER_BUILD_ARGS) .
 
 # ==============================================================================
