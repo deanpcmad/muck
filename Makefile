@@ -1,11 +1,24 @@
-# Don't print executed commands as they include the GitHub Package key
-.SILENT:
+# ==============================================================================
+# Welcome to the Makefile
+# ==============================================================================
+#
+# This Makefile contains a series of tasks which can help with building, testing
+# and working with the app. The following tasks are available to you:
+#
+# Image building & releasing actions:
+#
+#   make docker-build      - Builds a production Docker image.
+#   make docker-image      - Builds a production Docker image and tags it as
+#                            appropriate based on the current branch & tag.
+#   make docker-release    - Builds a production Docker image and uploads to the
+#                            registry.
+#
 
 # ==============================================================================
 # Configuration
 # ==============================================================================
 
-DOCKER_IMAGE := ghcr.io/deanocodes/muck
+DOCKER_IMAGE := 202367502124.dkr.ecr.eu-west-2.amazonaws.com/muck
 DOCKER_BUILD_CMD = docker build $(DOCKER_BUILD_ARGS) .
 
 # ==============================================================================
