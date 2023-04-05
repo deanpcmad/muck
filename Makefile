@@ -18,7 +18,7 @@
 # Configuration
 # ==============================================================================
 
-DOCKER_IMAGE := 202367502124.dkr.ecr.eu-west-2.amazonaws.com/muck
+DOCKER_IMAGE := registry.voupe.com/tools/muck
 DOCKER_BUILD_CMD = docker build $(DOCKER_BUILD_ARGS) .
 
 # ==============================================================================
