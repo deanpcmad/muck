@@ -11,8 +11,7 @@ pipeline {
         branch 'master'
       }
       steps {
-        sh 'aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 202367502124.dkr.ecr.eu-west-2.amazonaws.com'
-        sh 'make docker-release' 
+        sh 'make docker-release'
       }
     }
 
@@ -22,7 +21,7 @@ pipeline {
         changeset "VERSION"
       }
       steps {
-        sh 'make docker-release-version' 
+        sh 'make docker-release-version'
       }
     }
 
@@ -31,7 +30,7 @@ pipeline {
   post {
     always {
       mail to: 'dean@deanpcmad.com', from: 'jenkins@d34n.uk',
-        subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}", 
+        subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
         body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n\nBlue Ocean:\n${env.RUN_DISPLAY_URL}"
     }
   }
