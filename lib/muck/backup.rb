@@ -159,7 +159,7 @@ module Muck
             key: upload_file,
             body: File.open(file)
           )
-          
+
           if response.etag
             uploaded = [upload_bucket, upload_file].join("/")
             logger.info "Uploaded #{blue uploaded}"
@@ -204,7 +204,7 @@ module Muck
           logger.info "Tidying uploaded backup files. Keeping #{@database.server.upload[:keep]} back."
           files.each do |file|
             resp = s3_client.delete_object({
-              bucket: upload_bucket, 
+              bucket: upload_bucket,
               key: file
             })
 
@@ -216,7 +216,7 @@ module Muck
             end
           end
         end
-        
+
       end
     end
 

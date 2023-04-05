@@ -13,8 +13,8 @@ module Muck
       @properties[:name]
     end
 
-    def hostname
-      @properties[:hostname]
+    def app_name
+      @properties[:app_name]
     end
 
     def username
@@ -30,11 +30,11 @@ module Muck
     end
 
     def export_path
-      @export_path ||= server.export_path.gsub(':database', self.name)
+      @export_path ||= server.export_path.gsub(':app_name', self.app_name).gsub(':database', self.name)
     end
 
     def upload_path
-      @upload_path ||= server.upload_path.gsub(':database', self.name)
+      @upload_path ||= server.upload_path.gsub(':app_name', self.app_name).gsub(':database', self.name)
     end
 
     def backup
@@ -55,7 +55,8 @@ module Muck
 
     def dump_command
       password_opt = password ? "-p#{password}" : ""
-      "mysqldump -q --single-transaction -h #{hostname} -u #{username} #{password_opt} #{name}"
+
+      "docker exec #{app_name}-mysql-1 /usr/bin/mysqldump -u #{username} #{password_opt} #{name}"
     end
 
     def encrypt_command(file)

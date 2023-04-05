@@ -54,10 +54,10 @@ server do
 
   storage do
     # Specifies the directory that backups will be stored for this server. You
-    # can use :hostname to insert the name of the hostname automatically and
+    # can use :app_name to insert the name of the app automatically and
     # :database to insert the database name.
-    path "/data/:hostname/:database"
-    
+    path "/data/:app_name/:database"
+
     # The number of backups to keep
     keep 50
   end
@@ -95,8 +95,8 @@ server do
   database do
     # The name of the database
     name "example"
-    # The hostname (as accessed from the server) to connect to
-    hostname "127.0.0.1"
+    # The name of the docker container. Will be converted to `app_name-mysql-1`
+    app_name "my-app"
     # The username to authenticate to MySQL with
     username "root"
     # The password to authenticate to MySQL with

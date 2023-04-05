@@ -10,8 +10,8 @@ module Muck
         @hash[:name] = name
       end
 
-      def hostname(hostname)
-        @hash[:hostname] = hostname
+      def app_name(app_name)
+        @hash[:app_name] = app_name
       end
 
       def username(username)
