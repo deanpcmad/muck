@@ -1,0 +1,17 @@
+steps:
+  - label: ":docker: :package: Build"
+    plugins:
+      - docker-compose#v4.11.0:
+          config: docker-compose.yml
+          build: muck
+          image-repository: harbor.d34n.uk/prod/muck
+
+  - wait
+
+  - label: ":docker: Push Prod"
+    plugins:
+      - docker-compose#v4.11.0:
+          config: docker-compose.yml
+          push:
+            - muck:registry.voupe.com/tools/muck:$BUILDKITE_COMMIT
+            - muck:registry.voupe.com/tools/muck:latest
