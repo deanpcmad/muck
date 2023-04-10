@@ -56,7 +56,7 @@ module Muck
     def dump_command
       password_opt = password ? "-p#{password}" : ""
 
-      "docker exec #{app_name}-mysql-1 /usr/bin/mysqldump -u #{username} #{password_opt} #{name}"
+      "docker exec #{app_name}-mysql-1 /usr/bin/mysqldump --no-tablespaces -u #{username} #{password_opt} #{name}"
     end
 
     def encrypt_command(file)
