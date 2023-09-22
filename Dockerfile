@@ -1,16 +1,9 @@
-FROM ruby:3.0.2-bullseye
+FROM ruby:3.1.2-alpine
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-  build-essential \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /root/.bundle \
-  && mkdir -p /opt/muck
+RUN apk update && \
+  apk add --no-cache build-base curl git nodejs bash
 
 WORKDIR /opt/muck
-
-RUN gem install bundler --no-doc
 
 COPY Gemfile Gemfile.lock ./
 
