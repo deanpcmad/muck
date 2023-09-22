@@ -18,7 +18,6 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           push: true
-          target: "prod"
           platforms: linux/amd64,linux/arm64
           provenance: false
           tags: ghcr.io/deanpcmad/muck:commit-${{ github.sha }},ghcr.io/deanpcmad/muck:latest
