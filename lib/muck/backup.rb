@@ -113,7 +113,7 @@ module Muck
           if system(command)
             @encrypted_path = @export_path + ".enc"
             File.delete(export_path)
-            logger.info "Encrypted #{blue @encrypted_path} with GPG"
+            logger.info "Encrypted #{blue @encrypted_path} with GPG and deleted original"
           else
             logger.warn "Couldn't encrypt #{export_path} with GPG"
           end
