@@ -25,6 +25,10 @@ module Muck
       @properties[:password]
     end
 
+    def type
+      @properties[:type]
+    end
+
     def server
       @server
     end
@@ -53,10 +57,20 @@ module Muck
       File.open(manifest_path, 'w') { |f| f.write(manifest.to_yaml) }
     end
 
+    def backup_command
+      if type == "mysql"
+        "mysqldump"
+      elsif type == "mariadb"
+        "mariadb-dump"
+      else
+        "mysqldump"
+      end
+    end
+
     def dump_command
       password_opt = password ? "-p#{password}" : ""
 
-      "docker exec #{app_name}-mysql-1 /usr/bin/mysqldump --no-tablespaces -u #{username} #{password_opt} #{name}"
+      "docker exec #{app_name}-mysql-1 /usr/bin/#{backup_command} --no-tablespaces -u #{username} #{password_opt} #{name}"
     end
 
     def encrypt_command(file)

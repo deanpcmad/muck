@@ -22,6 +22,10 @@ module Muck
         @hash[:password] = password
       end
 
+      def type(type)
+        @hash[:type] = type
+      end
+
     end
   end
 end
