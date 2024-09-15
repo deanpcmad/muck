@@ -1,4 +1,4 @@
-FROM ruby:3.1.2-alpine
+FROM ruby:3.3.4-alpine
 
 RUN apk update && \
   apk add --no-cache build-base curl git nodejs bash gpg gpg-agent
