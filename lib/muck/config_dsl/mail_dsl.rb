@@ -10,8 +10,28 @@ module Muck
         @hash[:enabled] = enabled
       end
 
-      def recipient(recipient)
-        @hash[:recipient] = recipient
+      def hostname(hostname)
+        @hash[:hostname] = hostname
+      end
+
+      def port(port)
+        @hash[:port] = port
+      end
+
+      def username(username)
+        @hash[:username] = username
+      end
+
+      def password(password)
+        @hash[:password] = password
+      end
+
+      def from(from)
+        @hash[:from] = from
+      end
+
+      def to(to)
+        @hash[:to] = to
       end
 
     end
