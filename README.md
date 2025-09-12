@@ -89,6 +89,29 @@ server do
     aws_client_secret "client-secret"
   end
 
+  mail do
+    # Should mail be enabled?
+    enabled false
+
+    # The SMTP server hostname
+    hostname "smtp.example.com"
+
+    # The SMTP server port
+    port 587
+
+    # The username for SMTP authentication
+    username "your_username"
+
+    # The password for SMTP authentication
+    password "your_password"
+
+    # The sender email address
+    from "backup@example.com"
+
+    # The recipient email address
+    to "admin@example.com"
+  end
+
   database do
     # The name of the database
     name "example"
