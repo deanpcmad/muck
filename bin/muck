@@ -11,13 +11,19 @@ $stderr.sync = true
 
 require 'muck/config'
 require 'muck/logging'
+require 'muck/mailer'
 
 config = Muck::Config.new(config_file_path)
 
 begin
   case ARGV[0]
   when 'run'
-    config.run(:force => true)
+    results = config.run(:force => true)
+    if mail_config = config.defaults[:mail]
+      if mail_config[:enabled]
+        Muck::Mailer.send_summary_email(mail_config[:recipient], results)
+      end
+    end
   when 'single'
     if server = config.servers.find { |s| s.name.downcase == ARGV[1].to_s.downcase }
       if database = server.databases.find { |d| d.name.downcase == ARGV[2].to_s.downcase }
@@ -37,7 +43,12 @@ begin
     Muck.logger.info "\e[32mStarted Muck\e[0m"
     loop do
       $running = true
-      config.run
+      results = config.run
+      if mail_config = config.defaults[:mail]
+        if mail_config[:enabled]
+          Muck::Mailer.send_summary_email(mail_config[:recipient], results)
+        end
+      end
       $running = false
 
       $exit ? exit(0) : sleep(60)

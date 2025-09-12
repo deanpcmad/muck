@@ -1,6 +1,8 @@
 require 'muck/logging'
 require 'muck/utils'
 require 'fileutils'
+require 'muck/mailer'
+require 'muck/result'
 require "aws-sdk-s3"
 
 module Muck
@@ -49,13 +51,18 @@ module Muck
 
     def run
       logger.info "Backing up #{blue @database.name} from #{blue @database.server.ip_address} (#{blue @database.server.name})"
-      take_backup
-      encrypt
-      compress
-      upload
-      store_in_manifest
-      tidy_masters
-      tidy_uploads
+      begin
+        take_backup
+        encrypt
+        compress
+        upload
+        store_in_manifest
+        tidy_masters
+        tidy_uploads
+        Muck::Result.new(@database)
+      rescue => e
+        Muck::Result.new(@database, e)
+      end
     end
 
     def take_backup

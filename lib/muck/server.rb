@@ -25,6 +25,10 @@ module Muck
       @server_hash[:frequency] || @config.defaults[:frequency] || 60
     end
 
+    def mail
+      @server_hash[:mail] || @config.defaults[:mail] || { enabled: false }
+    end
+
     def upload
       @server_hash[:upload] || @config.defaults[:upload] || nil
     end

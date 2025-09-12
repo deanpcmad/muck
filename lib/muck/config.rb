@@ -15,13 +15,15 @@ module Muck
     attr_reader :servers
 
     def run(options = {})
+      results = []
       servers.each do |server|
         server.databases.each do |database|
           if database.backup_now? || options[:force]
-            database.backup
+            results << database.backup
           end
         end
       end
+      results
     end
 
     private

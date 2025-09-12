@@ -3,6 +3,7 @@ require 'muck/config_dsl/storage_dsl'
 require 'muck/config_dsl/encrypt_dsl'
 require 'muck/config_dsl/upload_dsl'
 require 'muck/config_dsl/database_dsl'
+require 'muck/config_dsl/mail_dsl'
 
 module Muck
   module ConfigDSL
@@ -50,6 +51,11 @@ module Muck
         dsl.instance_eval(&block)
         @hash[:databases] ||= []
         @hash[:databases] << hash
+      end
+
+      def mail(&block)
+        dsl = MailDSL.new(@hash[:mail] = Hash.new)
+        dsl.instance_eval(&block)
       end
 
     end
