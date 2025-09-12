@@ -6,7 +6,7 @@ module Muck
 
     DEFAULT_RENTENTION = {:hourly => 24, :daily => 7, :monthly => 12, :yearly => 8}
     DEFAULT_SSH_PROPERTIES = {:username => "root", :port => 22, :key => "/opt/muck/ssh-key"}
-    DEFAULT_DATABASE_PROPERTIES = {:name => "localhost", :ip_address => '127.0.0.1', :username => 'root', :name => 'example', :password => nil}
+    DEFAULT_DATABASE_PROPERTIES = {:ip_address => '127.0.0.1', :username => 'root', :name => 'example', :password => nil}
 
     def initialize(config, server_hash = {})
       @config = config
