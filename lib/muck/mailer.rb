@@ -2,21 +2,33 @@ require 'net/smtp'
 
 module Muck
   class Mailer
-    def self.send_email(recipient, subject, body)
+    def self.send_email(mail_config, recipient, subject, body)
+      from_address = mail_config[:from] || 'muck@example.com'
+      
       message = <<~MESSAGE
-        From: Muck Backup <muck@example.com>
+        From: #{from_address}
         To: #{recipient}
         Subject: #{subject}
         
         #{body}
       MESSAGE
 
-      Net::SMTP.start('localhost', 25) do |smtp|
-        smtp.send_message message, 'muck@example.com', recipient
+      hostname = mail_config[:hostname] || 'localhost'
+      port = mail_config[:port] || 25
+      
+      if mail_config[:username] && mail_config[:password]
+        Net::SMTP.start(hostname, port, 'localhost', mail_config[:username], mail_config[:password], :plain) do |smtp|
+          smtp.send_message message, from_address, recipient
+        end
+      else
+        Net::SMTP.start(hostname, port) do |smtp|
+          smtp.send_message message, from_address, recipient
+        end
       end
     end
 
-    def self.send_summary_email(recipient, results)
+    def self.send_summary_email(mail_config, results)
+      recipient = mail_config[:to] || mail_config[:recipient]
       subject = "[SUMMARY] Muck Backup Run"
       body = "Muck backup run completed. Here is the summary:\n\n"
 
@@ -28,7 +40,7 @@ module Muck
         end
       end
 
-      send_email(recipient, subject, body)
+      send_email(mail_config, recipient, subject, body)
     end
   end
 end

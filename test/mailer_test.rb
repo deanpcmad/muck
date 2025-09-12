@@ -5,11 +5,19 @@ require 'minitest/mock'
 
 class MailerTest < Minitest::Test
   def test_send_email
+    mail_config = {
+      hostname: 'smtp.example.com',
+      port: 587,
+      from: 'backup@example.com',
+      username: 'user@example.com',
+      password: 'secret123'
+    }
+    
     mock_smtp = Minitest::Mock.new
     mock_smtp.expect(:send_message, true, [String, String, String])
 
     Net::SMTP.stub(:start, true, mock_smtp) do
-      Muck::Mailer.send_email('test@example.com', 'Test Subject', 'Test Body')
+      Muck::Mailer.send_email(mail_config, 'test@example.com', 'Test Subject', 'Test Body')
     end
 
     mock_smtp.verify
@@ -34,5 +42,27 @@ class MailerTest < Minitest::Test
     assert_equal 'secret123', hash[:password]
     assert_equal 'backup@example.com', hash[:from]
     assert_equal 'admin@example.com', hash[:to]
+  end
+
+  def test_send_email_uses_smtp_config
+    mail_config = {
+      hostname: 'smtp.test.com',
+      port: 2525,
+      from: 'sender@test.com'
+    }
+    
+    # Mock Net::SMTP to verify it's called with the right hostname and port
+    smtp_mock = Minitest::Mock.new
+    smtp_mock.expect(:send_message, true, [String, String, String])
+    
+    Net::SMTP.stub(:start, lambda { |hostname, port, &block|
+      assert_equal 'smtp.test.com', hostname
+      assert_equal 2525, port
+      block.call(smtp_mock)
+    }) do
+      Muck::Mailer.send_email(mail_config, 'recipient@test.com', 'Test', 'Body')
+    end
+    
+    smtp_mock.verify
   end
 end

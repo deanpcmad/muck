@@ -21,7 +21,7 @@ begin
     results = config.run(:force => true)
     if mail_config = config.defaults[:mail]
       if mail_config[:enabled]
-        Muck::Mailer.send_summary_email(mail_config[:recipient], results)
+        Muck::Mailer.send_summary_email(mail_config, results)
       end
     end
   when 'single'
@@ -46,7 +46,7 @@ begin
       results = config.run
       if mail_config = config.defaults[:mail]
         if mail_config[:enabled]
-          Muck::Mailer.send_summary_email(mail_config[:recipient], results)
+          Muck::Mailer.send_summary_email(mail_config, results)
         end
       end
       $running = false
