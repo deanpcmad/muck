@@ -13,8 +13,7 @@ jobs:
           ruby-version: '3.4'
           bundler-cache: true
       - name: Run tests
-        run: |
-          bundle exec ruby -I lib -I test test/all_tests.rb
+        run: bundle exec rake test
 
   build:
     needs: test
