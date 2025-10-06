@@ -4,18 +4,18 @@ module Muck
   class Mailer
     def self.send_email(mail_config, recipient, subject, body)
       from_address = mail_config[:from] || 'muck@example.com'
-      
+
       message = <<~MESSAGE
         From: #{from_address}
         To: #{recipient}
         Subject: #{subject}
-        
+
         #{body}
       MESSAGE
 
       hostname = mail_config[:hostname] || 'localhost'
       port = mail_config[:port] || 25
-      
+
       if mail_config[:username] && mail_config[:password]
         Net::SMTP.start(hostname, port, 'localhost', mail_config[:username], mail_config[:password], :plain) do |smtp|
           smtp.send_message message, from_address, recipient
@@ -34,9 +34,9 @@ module Muck
 
       results.each do |result|
         if result.success?
-          body += "- [SUCCESS] #{result.database.name} on #{result.database.server.name}\n"
+          body += "- [SUCCESS] #{result.database.app_name} (#{result.database.name}) on #{result.database.server.name}\n"
         else
-          body += "- [FAILURE] #{result.database.name} on #{result.database.server.name}: #{result.error.message}\n"
+          body += "- [FAILURE] #{result.database.app_name} (#{result.database.name}) on #{result.database.server.name}: #{result.error.message}\n"
         end
       end
 
