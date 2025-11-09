@@ -9,6 +9,7 @@ module Muck
         From: #{from_address}
         To: #{recipient}
         Subject: #{subject}
+        Date: #{Time.now.rfc2822}
 
         #{body}
       MESSAGE
