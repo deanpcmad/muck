@@ -44,6 +44,7 @@ module Muck
       options[:region] = @database.server.upload[:aws_region]
       if @database.server.upload[:aws_endpoint]
         options[:endpoint] = @database.server.upload[:aws_endpoint]
+        options[:force_path_style] = true
       end
 
       Aws::S3::Client.new(options)
@@ -171,8 +172,10 @@ module Muck
             uploaded = [upload_bucket, upload_file].join("/")
             logger.info "Uploaded #{blue uploaded}"
           else
-            raise Error, "Couldn't upload backup because it doesn't exist at #{file}"
+            raise Error, "Failed to upload backup to S3"
           end
+        else
+          raise Error, "Couldn't upload backup because file doesn't exist at #{file}"
         end
 
       else
