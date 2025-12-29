@@ -18,7 +18,7 @@ class MailerTest < Minitest::Test
       assert_equal 'localhost', helo
       assert_equal 'user@example.com', user
       assert_equal 'secret123', pass
-      assert_equal :plain, authtype
+      assert_equal :login, authtype
       inner_mock = Minitest::Mock.new
       inner_mock.expect(:send_message, true, [String, String, String])
       block.call(inner_mock)
@@ -95,7 +95,7 @@ class MailerTest < Minitest::Test
     }
 
     smtp_instance = Minitest::Mock.new
-    smtp_instance.expect(:enable_ssl, nil)
+    smtp_instance.expect(:enable_ssl, nil, [OpenSSL::SSL::SSLContext])
     smtp_instance.expect(:start, nil) do |&block|
       inner_mock = Minitest::Mock.new
       inner_mock.expect(:send_message, true, [String, String, String])
@@ -120,7 +120,7 @@ class MailerTest < Minitest::Test
     }
 
     smtp_instance = Minitest::Mock.new
-    smtp_instance.expect(:enable_starttls, nil)
+    smtp_instance.expect(:enable_starttls, nil, [OpenSSL::SSL::SSLContext])
     smtp_instance.expect(:start, nil) do |&block|
       inner_mock = Minitest::Mock.new
       inner_mock.expect(:send_message, true, [String, String, String])

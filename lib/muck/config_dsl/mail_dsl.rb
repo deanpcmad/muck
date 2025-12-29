@@ -40,6 +40,10 @@ module Muck
       def tls(tls)
         @hash[:tls] = tls
       end
+
+      def auth_method(auth_method)
+        @hash[:auth_method] = auth_method
+      end
     end
   end
 end

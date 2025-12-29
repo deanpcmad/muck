@@ -1,4 +1,5 @@
 require 'net/smtp'
+require 'openssl'
 
 module Muck
   class Mailer
@@ -20,13 +21,19 @@ module Muck
       smtp = Net::SMTP.new(hostname, port)
 
       if mail_config[:ssl]
-        smtp.enable_ssl
+        ssl_context = OpenSSL::SSL::SSLContext.new
+        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        smtp.enable_ssl(ssl_context)
       elsif mail_config[:tls]
-        smtp.enable_starttls
+        ssl_context = OpenSSL::SSL::SSLContext.new
+        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        smtp.enable_starttls(ssl_context)
       end
 
+      auth_method = mail_config[:auth_method] || :login
+
       if mail_config[:username] && mail_config[:password]
-        smtp.start('localhost', mail_config[:username], mail_config[:password], :plain) do |s|
+        smtp.start('localhost', mail_config[:username], mail_config[:password], auth_method) do |s|
           s.send_message message, from_address, recipient
         end
       else
