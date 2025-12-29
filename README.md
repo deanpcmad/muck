@@ -110,6 +110,12 @@ server do
 
     # The recipient email address
     to "admin@example.com"
+
+    # Enable SSL (implicit TLS, typically port 465)
+    ssl false
+
+    # Enable STARTTLS (typically port 587)
+    tls true
   end
 
   database do

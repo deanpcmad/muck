@@ -12,21 +12,31 @@ class MailerTest < Minitest::Test
       username: 'user@example.com',
       password: 'secret123'
     }
-    
-    mock_smtp = Minitest::Mock.new
-    mock_smtp.expect(:send_message, true, [String, String, String])
 
-    Net::SMTP.stub(:start, true, mock_smtp) do
+    smtp_instance = Minitest::Mock.new
+    smtp_instance.expect(:start, nil) do |helo, user, pass, authtype, &block|
+      assert_equal 'localhost', helo
+      assert_equal 'user@example.com', user
+      assert_equal 'secret123', pass
+      assert_equal :plain, authtype
+      inner_mock = Minitest::Mock.new
+      inner_mock.expect(:send_message, true, [String, String, String])
+      block.call(inner_mock)
+      inner_mock.verify
+      true
+    end
+
+    Net::SMTP.stub(:new, smtp_instance) do
       Muck::Mailer.send_email(mail_config, 'test@example.com', 'Test Subject', 'Test Body')
     end
 
-    mock_smtp.verify
+    smtp_instance.verify
   end
 
   def test_mail_dsl_configuration
     hash = {}
     dsl = Muck::ConfigDSL::MailDSL.new(hash)
-    
+
     dsl.enabled(true)
     dsl.hostname('smtp.example.com')
     dsl.port(587)
@@ -34,7 +44,9 @@ class MailerTest < Minitest::Test
     dsl.password('secret123')
     dsl.from('backup@example.com')
     dsl.to('admin@example.com')
-    
+    dsl.ssl(true)
+    dsl.tls(false)
+
     assert_equal true, hash[:enabled]
     assert_equal 'smtp.example.com', hash[:hostname]
     assert_equal 587, hash[:port]
@@ -42,6 +54,8 @@ class MailerTest < Minitest::Test
     assert_equal 'secret123', hash[:password]
     assert_equal 'backup@example.com', hash[:from]
     assert_equal 'admin@example.com', hash[:to]
+    assert_equal true, hash[:ssl]
+    assert_equal false, hash[:tls]
   end
 
   def test_send_email_uses_smtp_config
@@ -50,19 +64,75 @@ class MailerTest < Minitest::Test
       port: 2525,
       from: 'sender@test.com'
     }
-    
+
     # Mock Net::SMTP to verify it's called with the right hostname and port
-    smtp_mock = Minitest::Mock.new
-    smtp_mock.expect(:send_message, true, [String, String, String])
-    
-    Net::SMTP.stub(:start, lambda { |hostname, port, &block|
+    smtp_instance = Minitest::Mock.new
+    smtp_instance.expect(:start, nil) do |&block|
+      inner_mock = Minitest::Mock.new
+      inner_mock.expect(:send_message, true, [String, String, String])
+      block.call(inner_mock)
+      inner_mock.verify
+      true
+    end
+
+    Net::SMTP.stub(:new, lambda { |hostname, port|
       assert_equal 'smtp.test.com', hostname
       assert_equal 2525, port
-      block.call(smtp_mock)
+      smtp_instance
     }) do
       Muck::Mailer.send_email(mail_config, 'recipient@test.com', 'Test', 'Body')
     end
-    
-    smtp_mock.verify
+
+    smtp_instance.verify
+  end
+
+  def test_send_email_with_ssl
+    mail_config = {
+      hostname: 'smtp.test.com',
+      port: 465,
+      from: 'sender@test.com',
+      ssl: true
+    }
+
+    smtp_instance = Minitest::Mock.new
+    smtp_instance.expect(:enable_ssl, nil)
+    smtp_instance.expect(:start, nil) do |&block|
+      inner_mock = Minitest::Mock.new
+      inner_mock.expect(:send_message, true, [String, String, String])
+      block.call(inner_mock)
+      inner_mock.verify
+      true
+    end
+
+    Net::SMTP.stub(:new, smtp_instance) do
+      Muck::Mailer.send_email(mail_config, 'recipient@test.com', 'Test', 'Body')
+    end
+
+    smtp_instance.verify
+  end
+
+  def test_send_email_with_tls
+    mail_config = {
+      hostname: 'smtp.test.com',
+      port: 587,
+      from: 'sender@test.com',
+      tls: true
+    }
+
+    smtp_instance = Minitest::Mock.new
+    smtp_instance.expect(:enable_starttls, nil)
+    smtp_instance.expect(:start, nil) do |&block|
+      inner_mock = Minitest::Mock.new
+      inner_mock.expect(:send_message, true, [String, String, String])
+      block.call(inner_mock)
+      inner_mock.verify
+      true
+    end
+
+    Net::SMTP.stub(:new, smtp_instance) do
+      Muck::Mailer.send_email(mail_config, 'recipient@test.com', 'Test', 'Body')
+    end
+
+    smtp_instance.verify
   end
 end

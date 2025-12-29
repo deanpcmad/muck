@@ -17,20 +17,28 @@ module Muck
       hostname = mail_config[:hostname] || 'localhost'
       port = mail_config[:port] || 25
 
+      smtp = Net::SMTP.new(hostname, port)
+
+      if mail_config[:ssl]
+        smtp.enable_ssl
+      elsif mail_config[:tls]
+        smtp.enable_starttls
+      end
+
       if mail_config[:username] && mail_config[:password]
-        Net::SMTP.start(hostname, port, 'localhost', mail_config[:username], mail_config[:password], :plain) do |smtp|
-          smtp.send_message message, from_address, recipient
+        smtp.start('localhost', mail_config[:username], mail_config[:password], :plain) do |s|
+          s.send_message message, from_address, recipient
         end
       else
-        Net::SMTP.start(hostname, port) do |smtp|
-          smtp.send_message message, from_address, recipient
+        smtp.start do |s|
+          s.send_message message, from_address, recipient
         end
       end
     end
 
     def self.send_summary_email(mail_config, results)
       recipient = mail_config[:to] || mail_config[:recipient]
-      subject = "[SUMMARY] Muck Backup Run"
+      subject = '[SUMMARY] Muck Backup Run'
       body = "Muck backup run completed. Here is the summary:\n\n"
 
       results.each do |result|

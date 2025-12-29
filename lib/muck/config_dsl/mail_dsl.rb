@@ -1,7 +1,6 @@
 module Muck
   module ConfigDSL
     class MailDSL
-
       def initialize(hash)
         @hash = hash
       end
@@ -34,6 +33,13 @@ module Muck
         @hash[:to] = to
       end
 
+      def ssl(ssl)
+        @hash[:ssl] = ssl
+      end
+
+      def tls(tls)
+        @hash[:tls] = tls
+      end
     end
   end
 end
