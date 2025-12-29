@@ -20,14 +20,28 @@ module Muck
 
       smtp = Net::SMTP.new(hostname, port)
 
-      if mail_config[:ssl]
+      if mail_config[:ssl] || mail_config[:tls]
         ssl_context = OpenSSL::SSL::SSLContext.new
-        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        smtp.enable_ssl(ssl_context)
-      elsif mail_config[:tls]
-        ssl_context = OpenSSL::SSL::SSLContext.new
-        ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        smtp.enable_starttls(ssl_context)
+
+        if mail_config[:verify_ssl] == false
+          ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        else
+          ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          ssl_context.ca_file = mail_config[:ca_file] if mail_config[:ca_file]
+          ssl_context.ca_path = mail_config[:ca_path] if mail_config[:ca_path]
+
+          # Use system CA store if no custom CA is specified
+          if !mail_config[:ca_file] && !mail_config[:ca_path]
+            ssl_context.cert_store = OpenSSL::X509::Store.new
+            ssl_context.cert_store.set_default_paths
+          end
+        end
+
+        if mail_config[:ssl]
+          smtp.enable_ssl(ssl_context)
+        else
+          smtp.enable_starttls(ssl_context)
+        end
       end
 
       auth_method = mail_config[:auth_method] || :login
