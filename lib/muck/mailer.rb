@@ -27,14 +27,8 @@ module Muck
           ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
         else
           ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-          ssl_context.ca_file = mail_config[:ca_file] if mail_config[:ca_file]
-          ssl_context.ca_path = mail_config[:ca_path] if mail_config[:ca_path]
-
-          # Use system CA store if no custom CA is specified
-          if !mail_config[:ca_file] && !mail_config[:ca_path]
-            ssl_context.cert_store = OpenSSL::X509::Store.new
-            ssl_context.cert_store.set_default_paths
-          end
+          ssl_context.cert_store = OpenSSL::X509::Store.new
+          ssl_context.cert_store.set_default_paths
         end
 
         if mail_config[:ssl]
@@ -44,10 +38,8 @@ module Muck
         end
       end
 
-      auth_method = mail_config[:auth_method] || :login
-
       if mail_config[:username] && mail_config[:password]
-        smtp.start('localhost', mail_config[:username], mail_config[:password], auth_method) do |s|
+        smtp.start('localhost', mail_config[:username], mail_config[:password], :plain) do |s|
           s.send_message message, from_address, recipient
         end
       else

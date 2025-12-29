@@ -41,18 +41,6 @@ module Muck
         @hash[:tls] = tls
       end
 
-      def auth_method(auth_method)
-        @hash[:auth_method] = auth_method
-      end
-
-      def ca_file(ca_file)
-        @hash[:ca_file] = ca_file
-      end
-
-      def ca_path(ca_path)
-        @hash[:ca_path] = ca_path
-      end
-
       def verify_ssl(verify_ssl)
         @hash[:verify_ssl] = verify_ssl
       end
