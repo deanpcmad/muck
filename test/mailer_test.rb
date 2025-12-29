@@ -18,7 +18,7 @@ class MailerTest < Minitest::Test
       assert_equal 'localhost', helo
       assert_equal 'user@example.com', user
       assert_equal 'secret123', pass
-      assert_equal :login, authtype
+      assert_equal :plain, authtype
       inner_mock = Minitest::Mock.new
       inner_mock.expect(:send_message, true, [String, String, String])
       block.call(inner_mock)
