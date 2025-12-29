@@ -3,7 +3,6 @@ require 'yaml'
 
 module Muck
   class Database
-
     def initialize(server, properties)
       @server = server
       @properties = properties
@@ -29,16 +28,18 @@ module Muck
       @properties[:type]
     end
 
-    def server
-      @server
+    def path
+      @properties[:path]
     end
 
+    attr_reader :server
+
     def export_path
-      @export_path ||= server.export_path.gsub(':app_name', self.app_name).gsub(':database', self.name)
+      @export_path ||= server.export_path.gsub(':app_name', app_name).gsub(':database', name)
     end
 
     def upload_path
-      @upload_path ||= server.upload_path.gsub(':app_name', self.app_name).gsub(':database', self.name)
+      @upload_path ||= server.upload_path.gsub(':app_name', app_name).gsub(':database', name)
     end
 
     def backup
@@ -50,7 +51,7 @@ module Muck
     end
 
     def manifest
-      @manifest ||= File.exist?(manifest_path) ? YAML.load_file(manifest_path) : {:backups => []}
+      @manifest ||= File.exist?(manifest_path) ? YAML.load_file(manifest_path) : { backups: [] }
     end
 
     def save_manifest
@@ -58,19 +59,22 @@ module Muck
     end
 
     def backup_command
-      if type == "mysql"
-        "mysqldump"
-      elsif type == "mariadb"
-        "mariadb-dump"
-      else
-        "mysqldump"
+      case type
+      when 'mysql' then 'mysqldump'
+      when 'mariadb' then 'mariadb-dump'
+      when 'sqlite' then 'sqlite3'
+      else 'mysqldump'
       end
     end
 
     def dump_command
-      password_opt = password ? "-p#{password}" : ""
-
-      "docker exec #{app_name}-mysql-1 /usr/bin/#{backup_command} --no-tablespaces -u #{username} #{password_opt} #{name}"
+      if type == 'sqlite'
+        tmp_file = "/tmp/muck_backup_#{name}.sqlite"
+        "sqlite3 #{path} \".backup #{tmp_file}\" && cat #{tmp_file} && rm #{tmp_file}"
+      else
+        password_opt = password ? "-p#{password}" : ''
+        "docker exec #{app_name}-mysql-1 /usr/bin/#{backup_command} --no-tablespaces -u #{username} #{password_opt} #{name}"
+      end
     end
 
     def encrypt_command(file)
@@ -78,16 +82,13 @@ module Muck
     end
 
     def last_backup_at
-      if last_backup = manifest[:backups].last
-        Time.at(last_backup[:timestamp])
-      else
-        nil
-      end
+      return unless last_backup = manifest[:backups].last
+
+      Time.at(last_backup[:timestamp])
     end
 
     def backup_now?
       last_backup_at.nil? || last_backup_at <= Time.now - (@server.frequency * 60)
     end
-
   end
 end

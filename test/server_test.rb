@@ -19,6 +19,6 @@ class ServerTest < Minitest::Test
   end
 
   def test_databases
-    assert_equal 1, @server.databases.length
+    assert_equal 2, @server.databases.length
   end
 end

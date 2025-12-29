@@ -3,33 +3,36 @@ require 'muck/utils'
 require 'fileutils'
 require 'muck/mailer'
 require 'muck/result'
-require "aws-sdk-s3"
+require 'aws-sdk-s3'
 
 module Muck
   class Backup
-
     include Muck::Logging
     include Muck::Utils
 
     def initialize(database)
       @database = database
-      @time = Time.now.strftime("%Y-%m-%d-%H-%M-%S")
+      @time = Time.now.strftime('%Y-%m-%d-%H-%M-%S')
+    end
+
+    def file_extension
+      @database.type == 'sqlite' ? 'sqlite' : 'sql'
     end
 
     def export_path
-      @export_path ||= File.join(@database.export_path, "master", @time + ".sql")
+      @export_path ||= File.join(@database.export_path, 'master', @time + ".#{file_extension}")
     end
 
     def encrypted_path
-      @encrypted_path ||= File.join(@database.export_path, "master", @time + ".sql.enc")
+      @encrypted_path ||= File.join(@database.export_path, 'master', @time + ".#{file_extension}.enc")
     end
 
     def upload_path
-      @upload_path ||= File.join(@database.upload_path, @time + ".sql.gz")
+      @upload_path ||= File.join(@database.upload_path, @time + ".#{file_extension}.gz")
     end
 
     def encrypted_upload_path
-      @encrypted_upload_path ||= File.join(@database.upload_path, @time + ".sql.enc")
+      @encrypted_upload_path ||= File.join(@database.upload_path, @time + ".#{file_extension}.enc")
     end
 
     def upload_bucket
@@ -61,33 +64,40 @@ module Muck
         tidy_masters
         tidy_uploads
         Muck::Result.new(@database)
-      rescue => e
+      rescue StandardError => e
         Muck::Result.new(@database, e)
       end
     end
 
     def take_backup
       logger.info "Connecting to #{blue @database.server.ssh_username}@#{blue @database.server.ip_address}:#{blue @database.server.ssh_port}"
-      FileUtils.mkdir_p(File.dirname(self.export_path))
+      FileUtils.mkdir_p(File.dirname(export_path))
       file = File.open(export_path, 'w')
       ssh_session = @database.server.create_ssh_session
       channel = ssh_session.open_channel do |channel|
-        logger.debug "Running: #{@database.dump_command.gsub(@database.password, '****')}"
+        log_command = if @database.password
+                        @database.dump_command.gsub(@database.password,
+                                                    '****')
+                      else
+                        @database.dump_command
+                      end
+        logger.debug "Running: #{log_command}"
         channel.exec(@database.dump_command) do |channel, success|
-          raise Error, "Could not execute dump command" unless success
-          channel.on_data do |c, data|
+          raise Error, 'Could not execute dump command' unless success
+
+          channel.on_data do |_c, data|
             file.write(data)
           end
 
-          channel.on_extended_data do |c, _, data|
+          channel.on_extended_data do |_c, _, data|
             logger.debug red(data.gsub(/[\r\n]/, ''))
           end
 
-          channel.on_request("exit-status") do |_, data|
+          channel.on_request('exit-status') do |_, data|
             exit_code = data.read_long
             if exit_code != 0
               logger.debug "Exit status was #{exit_code}"
-              raise Error, "mysqldump returned an error when executing."
+              raise Error, 'Database backup command returned an error.'
             end
           end
         end
@@ -99,37 +109,36 @@ module Muck
     end
 
     def store_in_manifest
-      if @database.server.encrypt[:enabled]
-        file = encrypted_path
-      else
-        file = export_path
-      end
+      file = if @database.server.encrypt[:enabled]
+               encrypted_path
+             else
+               export_path
+             end
 
-      if File.exist?(file)
-        details = {timestamp: Time.now.to_i, path: file, size: File.size(file)}
-        @database.manifest[:backups] << details
-        @database.save_manifest
-      else
-        raise Error, "Couldn't store backup in manifest because it doesn't exist at #{file}"
-      end
+      raise Error, "Couldn't store backup in manifest because it doesn't exist at #{file}" unless File.exist?(file)
+
+      details = { timestamp: Time.now.to_i, path: file, size: File.size(file) }
+      @database.manifest[:backups] << details
+      @database.save_manifest
     end
 
     def encrypt
       if @database.server.encrypt[:enabled]
-        if File.exist?(export_path)
-          command = @database.encrypt_command(export_path)
-          if system(command)
-            @encrypted_path = @export_path + ".enc"
-            File.delete(export_path)
-            logger.info "Encrypted #{blue @encrypted_path} with GPG and deleted original"
-          else
-            logger.warn "Couldn't encrypt #{export_path} with GPG"
-          end
-        else
+        unless File.exist?(export_path)
           raise Error, "Couldn't compress backup because it doesn't exist at #{export_path}"
         end
+
+        command = @database.encrypt_command(export_path)
+        if system(command)
+          @encrypted_path = @export_path + '.enc'
+          File.delete(export_path)
+          logger.info "Encrypted #{blue @encrypted_path} with GPG and deleted original"
+        else
+          logger.warn "Couldn't encrypt #{export_path} with GPG"
+        end
+
       else
-        logger.warn "Encryption is not enabled so skipping"
+        logger.warn 'Encryption is not enabled so skipping'
       end
     end
 
@@ -137,15 +146,13 @@ module Muck
       # Encryption also compresses so skip
       return if @database.server.encrypt[:enabled]
 
-      if File.exist?(export_path)
-        if system("gzip #{export_path}")
-          @export_path = @export_path + ".gz"
-          logger.info "Compressed #{blue export_path} with gzip"
-        else
-          logger.warn "Couldn't compress #{export_path} with gzip"
-        end
+      raise Error, "Couldn't compress backup because it doesn't exist at #{export_path}" unless File.exist?(export_path)
+
+      if system("gzip #{export_path}")
+        @export_path += '.gz'
+        logger.info "Compressed #{blue export_path} with gzip"
       else
-        raise Error, "Couldn't compress backup because it doesn't exist at #{export_path}"
+        logger.warn "Couldn't compress #{export_path} with gzip"
       end
     end
 
@@ -161,25 +168,21 @@ module Muck
           upload_file = upload_path
         end
 
-        if File.exist?(file)
-          response = s3_client.put_object(
-            bucket: upload_bucket,
-            key: upload_file,
-            body: File.open(file)
-          )
+        raise Error, "Couldn't upload backup because file doesn't exist at #{file}" unless File.exist?(file)
 
-          if response.etag
-            uploaded = [upload_bucket, upload_file].join("/")
-            logger.info "Uploaded #{blue uploaded}"
-          else
-            raise Error, "Failed to upload backup to S3"
-          end
-        else
-          raise Error, "Couldn't upload backup because file doesn't exist at #{file}"
-        end
+        response = s3_client.put_object(
+          bucket: upload_bucket,
+          key: upload_file,
+          body: File.open(file)
+        )
+
+        raise Error, 'Failed to upload backup to S3' unless response.etag
+
+        uploaded = [upload_bucket, upload_file].join('/')
+        logger.info "Uploaded #{blue uploaded}"
 
       else
-        logger.warn "Upload is not enabled so skipping"
+        logger.warn 'Upload is not enabled so skipping'
       end
     end
 
@@ -201,34 +204,31 @@ module Muck
     end
 
     def tidy_uploads
-      if @database.server.upload[:enabled]
+      return unless @database.server.upload[:enabled]
 
-        objects = s3_client.list_objects({
-          bucket: upload_bucket,
-          prefix: @database.upload_path
-        })
+      objects = s3_client.list_objects({
+                                         bucket: upload_bucket,
+                                         prefix: @database.upload_path
+                                       })
 
-        files = objects.contents.collect(&:key).sort.reverse.drop(@database.server.upload[:keep])
+      files = objects.contents.collect(&:key).sort.reverse.drop(@database.server.upload[:keep])
 
-        unless files.empty?
-          logger.info "Tidying uploaded backup files. Keeping #{@database.server.upload[:keep]} back."
-          files.each do |file|
-            resp = s3_client.delete_object({
-              bucket: upload_bucket,
-              key: file
-            })
+      return if files.empty?
 
-            if resp
-              @database.manifest[:backups].delete_if { |b| b[:path] == file }
-              logger.info "-> Deleted #{green file}"
-            else
-              logger.error red("-> Couldn't delete file at #{file}")
-            end
-          end
+      logger.info "Tidying uploaded backup files. Keeping #{@database.server.upload[:keep]} back."
+      files.each do |file|
+        resp = s3_client.delete_object({
+                                         bucket: upload_bucket,
+                                         key: file
+                                       })
+
+        if resp
+          @database.manifest[:backups].delete_if { |b| b[:path] == file }
+          logger.info "-> Deleted #{green file}"
+        else
+          logger.error red("-> Couldn't delete file at #{file}")
         end
-
       end
     end
-
   end
 end

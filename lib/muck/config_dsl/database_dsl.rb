@@ -1,7 +1,6 @@
 module Muck
   module ConfigDSL
     class DatabaseDSL
-
       def initialize(hash)
         @hash = hash
       end
@@ -26,6 +25,9 @@ module Muck
         @hash[:type] = type
       end
 
+      def path(path)
+        @hash[:path] = path
+      end
     end
   end
 end
