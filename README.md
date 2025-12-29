@@ -2,12 +2,13 @@
 
 Modifed from [@adamcooke/muck](https://github.com/adamcooke/muck).
 
-Muck is a tool which will backup & store MySQL dump files from remote hosts. Through a simple
-configuration file, you can add hosts & databaes which you wish to be backed up and Muck will
-connect to those hosts over SSH, grab a dump file using `mysqldump`, encrypt it,
+Muck is a tool which will backup & store MySQL, MariaDB, and SQLite database files from remote hosts. Through a simple
+configuration file, you can add hosts & databases which you wish to be backed up and Muck will
+connect to those hosts over SSH, grab a dump file, encrypt it,
 compress it and store it away on its own server and/or upload it to S3.
 
 * Connect to any number of servers and backup any number of databases on each server.
+* Supports MySQL, MariaDB, and SQLite databases.
 * Encrypt backup files with GPG.
 * Tidies up after itself.
 * Secure because we connect over SSH before connecting to the database.
@@ -123,10 +124,24 @@ server do
     name "example"
     # The name of the docker container. Will be converted to `app_name-mysql-1`
     app_name "my-app"
-    # The username to authenticate to MySQL with
+    # The username to authenticate to MySQL with
     username "root"
     # The password to authenticate to MySQL with
     password nil
+    # The database type: mysql (default), mariadb, or sqlite
+    type "mysql"
+  end
+
+  # SQLite database example
+  database do
+    # The name of the database (used for backup file naming)
+    name "myapp_production"
+    # The app name (used for organizing backups)
+    app_name "my-app"
+    # Set type to sqlite
+    type "sqlite"
+    # The path to the SQLite database file on the remote server
+    path "/var/data/my-app/production.db"
   end
 
   # The database block above can be repeated within the context of the server
@@ -153,3 +168,41 @@ The data directory will populate itself as follows:
 ## Changing the defaults
 
 If you wish to change the global defaults, you can create a file in your config directory which includes a `defaults` block. This is the same as the `server` block shown above however the word `server` on the first line should be replaced with `defaults`. Any values you add to the defaults block will be used instead of the system defaults.
+
+## Restoring Backups
+
+### MySQL/MariaDB
+
+If encrypted, first decrypt the backup:
+
+```bash
+gpg --decrypt backup.sql.enc > backup.sql
+```
+
+Then restore using:
+
+```bash
+mysql -u username -p database_name < backup.sql
+```
+
+### SQLite
+
+SQLite backups are created using SQLite's `.backup` command, which produces a complete binary copy of the database file.
+
+If encrypted, first decrypt the backup:
+
+```bash
+gpg --decrypt backup.sqlite.enc > backup.sqlite
+```
+
+Then simply copy the file to your desired location:
+
+```bash
+cp backup.sqlite /path/to/database.db
+```
+
+Or use SQLite's restore command:
+
+```bash
+sqlite3 /path/to/database.db ".restore backup.sqlite"
+```
